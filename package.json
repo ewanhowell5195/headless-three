@@ -1,0 +1,47 @@
+{
+  "name": "headless-three",
+  "version": "1.0.0",
+  "description": "Headless Three.js rendering for Node.js, made simple.",
+  "author": "Ewan Howell <ewanhowell5195> & CCCode",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ewanhowell5195/headless-three.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ewanhowell5195/headless-three/issues"
+  },
+  "scripts": {
+    "test": "node tests/test.js skia-canvas && node tests/test.js canvas && node tests/test.js @napi-rs/canvas",
+    "example": "node examples/cube.js"
+  },
+  "dependencies": {
+    "gl": "^8.1.6",
+    "sharp": "^0.34.5",
+    "three": "0.162.0"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^0.1.97",
+    "canvas": "^3.2.3",
+    "skia-canvas": "^3.0.8"
+  },
+  "keywords": [
+    "three",
+    "threejs",
+    "three.js",
+    "node",
+    "headless",
+    "webgl",
+    "rendering",
+    "3d",
+    "server-side"
+  ]
+}
