@@ -108,6 +108,9 @@ Renders a scene to an image buffer or file. When saving to a file, the format is
 | `height` | `1024` | Output height in pixels |
 | `path` | | If provided, saves to this file path. Format is inferred from the extension |
 | `format` | | Output format (`"png"`, `"jpeg"`, `"webp"`, `"avif"`, `"tiff"`, etc.). Overrides extension inference |
+| `colorSpace` | `THREE.SRGBColorSpace` | Renderer output color space |
+| `clearColor` | `0x000000` | Background clear color |
+| `clearAlpha` | `0` | Background clear alpha (0 = transparent) |
 
 ```js
 // Save to file (format inferred from extension)

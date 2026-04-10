@@ -141,10 +141,16 @@ export default async function({ Canvas, Image, ImageData }) {
       return tex
     },
 
-    async render({ scene, camera, width = 1024, height = 1024, path, format }) {
+    async render({ scene, camera, width = 1024, height = 1024, path, format, colorSpace, clearColor, clearAlpha }) {
       const glCtx = createContext(width, height)
       const renderer = new THREE.WebGLRenderer({ context: glCtx })
       renderer.setSize(width, height)
+      if (colorSpace) {
+        renderer.outputColorSpace = colorSpace
+      }
+      if (clearColor !== undefined || clearAlpha !== undefined) {
+        renderer.setClearColor(clearColor ?? 0x000000, clearAlpha ?? 0)
+      }
       camera.projectionMatrix.elements[5] *= -1
       const gl = renderer.getContext()
       const currentFrontFace = gl.getParameter(gl.FRONT_FACE)
