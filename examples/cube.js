@@ -5,8 +5,6 @@ const { THREE, render, loadTexture } = await getTHREE({ Canvas, Image, ImageData
 
 // Create scene
 const scene = new THREE.Scene()
-const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100)
-camera.position.set(0, 0, 5)
 
 // Add lighting
 scene.add(new THREE.AmbientLight(0x404040))
@@ -23,13 +21,26 @@ const cube = new THREE.Mesh(
 cube.rotation.set(Math.PI / 6, Math.PI / 4, 0)
 scene.add(cube)
 
-// Render and save
+// Perspective
+const perspective = new THREE.PerspectiveCamera(45, 1, 0.1, 100)
+perspective.position.set(0, 0, 5)
 await render({
   scene,
-  camera,
+  camera: perspective,
   width: 512,
   height: 512,
-  path: "examples/cube.png"
+  path: "examples/cube_perspective.png"
 })
+console.log("Saved examples/cube_perspective.png")
 
-console.log("Saved examples/cube.png")
+// Orthographic
+const ortho = new THREE.OrthographicCamera(-2, 2, 2, -2, 0.1, 100)
+ortho.position.set(0, 0, 5)
+await render({
+  scene,
+  camera: ortho,
+  width: 512,
+  height: 512,
+  path: "examples/cube_orthographic.png"
+})
+console.log("Saved examples/cube_orthographic.png")
