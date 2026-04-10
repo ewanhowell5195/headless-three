@@ -11,7 +11,7 @@ Runs Three.js r162 (the last version with WebGL 1 support) without polluting the
 
 * Three.js r162 running in an isolated VM context
 * No global scope pollution
-* Works with any canvas library ([skia-canvas](https://www.npmjs.com/package/skia-canvas), [canvas](https://www.npmjs.com/package/canvas), [@napi-rs/canvas](https://www.npmjs.com/package/@napi-rs/canvas))
+* Works with any canvas library ([skia-canvas](https://www.npmjs.com/package/skia-canvas), [@napi-rs/canvas](https://www.npmjs.com/package/@napi-rs/canvas), [canvas](https://www.npmjs.com/package/canvas))
 * Headless WebGL rendering via [gl](https://www.npmjs.com/package/gl)
 * Built-in render function with multi-format output (PNG, JPEG, WebP, etc.) via [sharp](https://www.npmjs.com/package/sharp)
 * Texture loading utility
