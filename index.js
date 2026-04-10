@@ -69,6 +69,8 @@ export default async function({ Canvas, Image, ImageData }) {
     window,
     self: window,
     OffscreenCanvas: Canvas,
+    HTMLCanvasElement: Canvas,
+    HTMLImageElement: Image,
     Image,
     ImageData,
     Blob: Blob,
