@@ -141,7 +141,7 @@ export default async function({ Canvas, Image, ImageData }) {
       return tex
     },
 
-    async render({ scene, camera, width = 1024, height = 1024, path, format, colorSpace, clearColor, clearAlpha }) {
+    async render({ scene, camera, width = 1024, height = 1024, path, format, colorSpace, clearColor, clearAlpha, unpremultiplyAlpha = true }) {
       const glCtx = createContext(width, height)
       const renderer = new THREE.WebGLRenderer({ context: glCtx })
       renderer.setSize(width, height)
@@ -162,7 +162,7 @@ export default async function({ Canvas, Image, ImageData }) {
       glCtx.readPixels(0, 0, width, height, glCtx.RGBA, glCtx.UNSIGNED_BYTE, pixels)
       renderer.dispose()
       glCtx.getExtension("STACKGL_destroy_context")?.destroy()
-      let image = sharp(Buffer.from(pixels.buffer), { raw: { width, height, channels: 4 } })
+      let image = sharp(Buffer.from(pixels.buffer), { raw: { width, height, channels: 4, premultiplied: unpremultiplyAlpha } })
       if (format) image = image[format]()
       if (path) return image.toFile(path)
       if (!format) image = image.png()

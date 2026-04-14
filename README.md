@@ -111,6 +111,7 @@ Renders a scene to an image buffer or file. When saving to a file, the format is
 | `colorSpace` | `THREE.SRGBColorSpace` | Renderer output color space |
 | `clearColor` | `0x000000` | Background clear color |
 | `clearAlpha` | `0` | Background clear alpha (0 = transparent) |
+| `unpremultiplyAlpha` | `true` | Un-premultiplies alpha in the output image. WebGL's alpha blending produces premultiplied pixels in the framebuffer, which makes semi-transparent colors appear darker than expected when saved as PNG. When `true`, the pixels are un-premultiplied so they render correctly in image viewers |
 
 ```js
 // Save to file (format inferred from extension)
