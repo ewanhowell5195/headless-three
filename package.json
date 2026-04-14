@@ -1,6 +1,6 @@
 {
   "name": "headless-three",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Headless Three.js rendering for Node.js, made simple.",
   "author": "Ewan Howell <ewanhowell5195> & CCCode",
   "license": "MIT",
