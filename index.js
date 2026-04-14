@@ -163,10 +163,10 @@ export default async function({ Canvas, Image, ImageData }) {
       renderer.dispose()
       glCtx.getExtension("STACKGL_destroy_context")?.destroy()
       let image = sharp(Buffer.from(pixels.buffer), { raw: { width, height, channels: 4, premultiplied: unpremultiplyAlpha } })
-      if (format) image = image[format]()
-      if (path) return image.toFile(path)
-      if (!format) image = image.png()
-      return image.toBuffer()
+      image = image[format ?? "png"]()
+      const buffer = await image.toBuffer()
+      if (path) await fs.promises.writeFile(path, buffer)
+      return buffer
     }
   }
 }
