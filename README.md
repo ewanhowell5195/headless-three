@@ -107,7 +107,8 @@ Renders a scene to an image buffer or file. When saving to a file, the format is
 | `width` | `1024` | Output width in pixels |
 | `height` | `1024` | Output height in pixels |
 | `path` | | If provided, saves to this file path. Format is inferred from the extension |
-| `format` | | Output format (`"png"`, `"jpeg"`, `"webp"`, `"avif"`, `"tiff"`, etc.). Overrides extension inference |
+| `format` | | Output format (`"png"`, `"jpeg"`, `"webp"`, `"avif"`, `"tiff"`, etc.). Overrides extension inference. See [sharp's output docs](https://sharp.pixelplumbing.com/api-output) for the full list of supported formats |
+| `output` | | Options passed directly to the sharp format encoder (e.g. `{ quality: 85, mozjpeg: true }` for JPEG). See [sharp's output docs](https://sharp.pixelplumbing.com/api-output) for all available options per format |
 | `colorSpace` | `THREE.SRGBColorSpace` | Renderer output color space |
 | `clearColor` | `0x000000` | Background clear color |
 | `clearAlpha` | `0` | Background clear alpha (0 = transparent) |
@@ -134,6 +135,22 @@ const buffer = await render({ scene, camera })
 
 // Get JPEG buffer
 const buffer = await render({ scene, camera, format: "jpeg" })
+
+// Smaller JPEG via mozjpeg encoder
+await render({
+  scene,
+  camera,
+  path: "output.jpg",
+  output: { quality: 85, mozjpeg: true }
+})
+
+// Maximum PNG compression
+await render({
+  scene,
+  camera,
+  path: "output.png",
+  output: { compressionLevel: 9, effort: 10 }
+})
 ```
 
 ### `loadTexture(input)`
