@@ -11,6 +11,33 @@ class Blob {
   }
 }
 
+function parseBackground(bg, THREE) {
+  const srgb = (r, g, b) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace)
+  if (bg instanceof THREE.Color) return { color: bg, alpha: 1 }
+  if (typeof bg === "number") return { color: new THREE.Color(bg), alpha: 1 }
+  if (Array.isArray(bg)) return { color: srgb(bg[0], bg[1], bg[2]), alpha: bg[3] ?? 1 }
+  if (typeof bg === "string") {
+    const hex8 = bg.match(/^#([0-9a-f]{8})$/i)
+    if (hex8) return { color: new THREE.Color("#" + hex8[1].slice(0, 6)), alpha: parseInt(hex8[1].slice(6), 16) / 255 }
+    const hex4 = bg.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])$/i)
+    if (hex4) return { color: new THREE.Color(`#${hex4[1]}${hex4[1]}${hex4[2]}${hex4[2]}${hex4[3]}${hex4[3]}`), alpha: parseInt(hex4[4] + hex4[4], 16) / 255 }
+    const rgb = bg.match(/^rgba?\(([^)]*)\)$/i)
+    if (rgb) {
+      const parts = rgb[1].split(",").map(s => s.trim())
+      const alpha = parts.length === 4 ? parseFloat(parts[3]) : 1
+      return { color: new THREE.Color(`rgb(${parts.slice(0, 3).join(",")})`), alpha }
+    }
+    const hsl = bg.match(/^hsla?\(([^)]*)\)$/i)
+    if (hsl) {
+      const parts = hsl[1].split(",").map(s => s.trim())
+      const alpha = parts.length === 4 ? parseFloat(parts[3]) : 1
+      return { color: new THREE.Color(`hsl(${parts.slice(0, 3).join(",")})`), alpha }
+    }
+    return { color: new THREE.Color(bg), alpha: 1 }
+  }
+  if (typeof bg === "object") return { color: srgb(bg.r ?? 0, bg.g ?? 0, bg.b ?? 0), alpha: bg.a ?? 1 }
+}
+
 export default async function({ Canvas, Image, ImageData }) {
   const require = createRequire(import.meta.url)
   const threePath = require.resolve("three")
@@ -61,10 +88,10 @@ export default async function({ Canvas, Image, ImageData }) {
     requestAnimationFrame: cb => setTimeout(cb, 0),
     cancelAnimationFrame: id => clearTimeout(id)
   }
-  const threeExports = {}
+  const THREE = {}
   const vmCtx = vm.createContext({
-    module: { exports: threeExports },
-    exports: threeExports,
+    module: { exports: THREE },
+    exports: THREE,
     document,
     window,
     self: window,
@@ -111,67 +138,67 @@ export default async function({ Canvas, Image, ImageData }) {
     URL
   })
   vm.runInContext(fs.readFileSync(threePath, "utf-8"), vmCtx)
-  const THREE = threeExports
-  return {
-    THREE,
-    runInContext: code => vm.runInContext(code, vmCtx),
+  const runInContext = code => vm.runInContext(code, vmCtx)
 
-    async loadTexture(input) {
-      let tex
-      if (input instanceof Canvas) {
-        tex = new THREE.CanvasTexture(input)
-      } else {
-        let canvas
-        if (input instanceof ImageData) {
-          canvas = new Canvas(input.width, input.height)
-          const ctx = canvas.getContext("2d")
-          ctx.putImageData(input, 0, 0)
-        } else if (input instanceof Image) {
-          canvas = new Canvas(input.width, input.height)
-          const ctx = canvas.getContext("2d")
-          ctx.drawImage(input, 0, 0)
-        } else if (typeof input === "string" || input instanceof Buffer) {
-          const img = await new Promise((resolve, reject) => {
-            const img = new Image()
-            img.onload = () => resolve(img)
-            img.onerror = reject
-            img.src = input
-          })
-          canvas = new Canvas(img.width, img.height)
-          const ctx = canvas.getContext("2d")
-          ctx.drawImage(img, 0, 0)
-        }
-        tex = new THREE.CanvasTexture(canvas)
+  async function loadTexture(input) {
+    let tex
+    if (input instanceof Canvas) {
+      tex = new THREE.CanvasTexture(input)
+    } else {
+      let canvas
+      if (input instanceof ImageData) {
+        canvas = new Canvas(input.width, input.height)
+        const ctx = canvas.getContext("2d")
+        ctx.putImageData(input, 0, 0)
+      } else if (input instanceof Image) {
+        canvas = new Canvas(input.width, input.height)
+        const ctx = canvas.getContext("2d")
+        ctx.drawImage(input, 0, 0)
+      } else if (typeof input === "string" || input instanceof Buffer) {
+        const img = await new Promise((resolve, reject) => {
+          const img = new Image()
+          img.onload = () => resolve(img)
+          img.onerror = reject
+          img.src = input
+        })
+        canvas = new Canvas(img.width, img.height)
+        const ctx = canvas.getContext("2d")
+        ctx.drawImage(img, 0, 0)
       }
-      return tex
-    },
-
-    async render({ scene, camera, width = 1024, height = 1024, path, format, output, colorSpace, clearColor, clearAlpha, premultiplyAlpha = false }) {
-      const glCtx = createContext(width, height)
-      const renderer = new THREE.WebGLRenderer({ context: glCtx })
-      renderer.setSize(width, height)
-      if (colorSpace) {
-        renderer.outputColorSpace = colorSpace
-      }
-      if (clearColor !== undefined || clearAlpha !== undefined) {
-        renderer.setClearColor(clearColor ?? 0x000000, clearAlpha ?? 0)
-      }
-      camera.projectionMatrix.elements[5] *= -1
-      const gl = renderer.getContext()
-      const currentFrontFace = gl.getParameter(gl.FRONT_FACE)
-      gl.frontFace(currentFrontFace === gl.CCW ? gl.CW : gl.CCW)
-      renderer.render(scene, camera)
-      gl.frontFace(currentFrontFace)
-      camera.projectionMatrix.elements[5] *= -1
-      const pixels = new Uint8Array(width * height * 4)
-      glCtx.readPixels(0, 0, width, height, glCtx.RGBA, glCtx.UNSIGNED_BYTE, pixels)
-      renderer.dispose()
-      glCtx.getExtension("STACKGL_destroy_context")?.destroy()
-      let image = sharp(Buffer.from(pixels.buffer), { raw: { width, height, channels: 4, premultiplied: !premultiplyAlpha } })
-      image = image[format ?? "png"](output)
-      const buffer = await image.toBuffer()
-      if (path) await fs.promises.writeFile(path, buffer)
-      return buffer
+      tex = new THREE.CanvasTexture(canvas)
     }
+    return tex
   }
+
+  async function render({ scene, camera, width = 1024, height = 1024, path, format, output, colorSpace, background, premultiplyAlpha = false }) {
+    const glCtx = createContext(width, height)
+    const renderer = new THREE.WebGLRenderer({ context: glCtx })
+    renderer.setSize(width, height)
+    if (colorSpace) {
+      renderer.outputColorSpace = colorSpace
+    }
+    if (background != null) {
+      const parsed = parseBackground(background, THREE)
+      if (parsed) renderer.setClearColor(parsed.color, parsed.alpha)
+    }
+    camera.projectionMatrix.elements[5] *= -1
+    const gl = renderer.getContext()
+    const currentFrontFace = gl.getParameter(gl.FRONT_FACE)
+    gl.frontFace(currentFrontFace === gl.CCW ? gl.CW : gl.CCW)
+    renderer.render(scene, camera)
+    gl.frontFace(currentFrontFace)
+    camera.projectionMatrix.elements[5] *= -1
+    const pixels = new Uint8Array(width * height * 4)
+    glCtx.readPixels(0, 0, width, height, glCtx.RGBA, glCtx.UNSIGNED_BYTE, pixels)
+    renderer.dispose()
+    glCtx.getExtension("STACKGL_destroy_context")?.destroy()
+    let image = sharp(Buffer.from(pixels.buffer), { raw: { width, height, channels: 4, premultiplied: !premultiplyAlpha } })
+    image = image[format ?? "png"](output)
+    const buffer = await image.toBuffer()
+    if (path) await fs.promises.writeFile(path, buffer)
+    return buffer
+  }
+
+  THREE.headless = { render, loadTexture, runInContext }
+  return { THREE, render, loadTexture, runInContext }
 }

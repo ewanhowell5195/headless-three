@@ -110,8 +110,7 @@ Renders a scene to an image buffer or file. When saving to a file, the format is
 | `format` | | Output format (`"png"`, `"jpeg"`, `"webp"`, `"avif"`, `"tiff"`, etc.). Overrides extension inference. See [sharp's output docs](https://sharp.pixelplumbing.com/api-output) for the full list of supported formats |
 | `output` | | Options passed directly to the sharp format encoder (e.g. `{ quality: 85, mozjpeg: true }` for JPEG). See [sharp's output docs](https://sharp.pixelplumbing.com/api-output) for all available options per format |
 | `colorSpace` | `THREE.SRGBColorSpace` | Renderer output color space |
-| `clearColor` | `0x000000` | Background clear color |
-| `clearAlpha` | `0` | Background clear alpha (0 = transparent) |
+| `background` | transparent | Background color. Accepts a hex number (`0xff0000`), `[r, g, b, a]` (0–1 floats), `{ r, g, b, a }` (0–1 floats), a CSS-style string (`"#rrggbb"`, `"#rrggbbaa"`, `"rgb(…)"`, `"rgba(…)"`, `"hsl(…)"`, `"hsla(…)"`, named colors like `"red"`), or a `THREE.Color`. Alpha is always optional and defaults to 1 |
 | `premultiplyAlpha` | `false` | Keeps alpha premultiplied in the output image. WebGL's alpha blending produces premultiplied pixels in the framebuffer, which makes semi-transparent colors appear darker than expected when saved as PNG. The default (`false`) un-premultiplies them so they render correctly in image viewers. Set to `true` only if you need the raw premultiplied output |
 
 ```js
