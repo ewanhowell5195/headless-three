@@ -167,6 +167,7 @@ export default async function({ Canvas, Image, ImageData }) {
       }
       tex = new THREE.CanvasTexture(canvas)
     }
+    tex.colorSpace = THREE.SRGBColorSpace
     return tex
   }
 
