@@ -103,7 +103,12 @@ export default async function({ Canvas, Image, ImageData }) {
     clearInterval,
     requestAnimationFrame: cb => setTimeout(cb, 0),
     cancelAnimationFrame: id => clearTimeout(id),
-    console
+    console,
+    atob,
+    btoa,
+    TextDecoder,
+    TextEncoder,
+    URL
   })
   vm.runInContext(fs.readFileSync(threePath, "utf-8"), vmCtx)
   const THREE = threeExports
