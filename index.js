@@ -11,33 +11,6 @@ class Blob {
   }
 }
 
-function parseBackground(bg, THREE) {
-  const srgb = (r, g, b) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace)
-  if (bg instanceof THREE.Color) return { color: bg, alpha: 1 }
-  if (typeof bg === "number") return { color: new THREE.Color(bg), alpha: 1 }
-  if (Array.isArray(bg)) return { color: srgb(bg[0], bg[1], bg[2]), alpha: bg[3] ?? 1 }
-  if (typeof bg === "string") {
-    const hex8 = bg.match(/^#([0-9a-f]{8})$/i)
-    if (hex8) return { color: new THREE.Color("#" + hex8[1].slice(0, 6)), alpha: parseInt(hex8[1].slice(6), 16) / 255 }
-    const hex4 = bg.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])$/i)
-    if (hex4) return { color: new THREE.Color(`#${hex4[1]}${hex4[1]}${hex4[2]}${hex4[2]}${hex4[3]}${hex4[3]}`), alpha: parseInt(hex4[4] + hex4[4], 16) / 255 }
-    const rgb = bg.match(/^rgba?\(([^)]*)\)$/i)
-    if (rgb) {
-      const parts = rgb[1].split(",").map(s => s.trim())
-      const alpha = parts.length === 4 ? parseFloat(parts[3]) : 1
-      return { color: new THREE.Color(`rgb(${parts.slice(0, 3).join(",")})`), alpha }
-    }
-    const hsl = bg.match(/^hsla?\(([^)]*)\)$/i)
-    if (hsl) {
-      const parts = hsl[1].split(",").map(s => s.trim())
-      const alpha = parts.length === 4 ? parseFloat(parts[3]) : 1
-      return { color: new THREE.Color(`hsl(${parts.slice(0, 3).join(",")})`), alpha }
-    }
-    return { color: new THREE.Color(bg), alpha: 1 }
-  }
-  if (typeof bg === "object") return { color: srgb(bg.r ?? 0, bg.g ?? 0, bg.b ?? 0), alpha: bg.a ?? 1 }
-}
-
 export default async function({ Canvas, Image, ImageData }) {
   const require = createRequire(import.meta.url)
   const threePath = require.resolve("three")
@@ -151,6 +124,13 @@ export default async function({ Canvas, Image, ImageData }) {
         const ctx = canvas.getContext("2d")
         ctx.putImageData(input, 0, 0)
       } else if (input instanceof Image) {
+        if (!input.complete) {
+          await new Promise((resolve, reject) => {
+            input.onload = resolve
+            input.onerror = reject
+          })
+        }
+        if (!input.width) throw new Error("headless-three: loadTexture received an Image that failed to load")
         canvas = new Canvas(input.width, input.height)
         const ctx = canvas.getContext("2d")
         ctx.drawImage(input, 0, 0)
@@ -179,7 +159,7 @@ export default async function({ Canvas, Image, ImageData }) {
       renderer.outputColorSpace = colorSpace
     }
     if (background != null) {
-      const parsed = parseBackground(background, THREE)
+      const parsed = parseColor(background)
       if (parsed) renderer.setClearColor(parsed.color, parsed.alpha)
     }
     camera.projectionMatrix.elements[5] *= -1
@@ -200,6 +180,33 @@ export default async function({ Canvas, Image, ImageData }) {
     return buffer
   }
 
-  THREE.headless = { render, loadTexture, runInContext }
-  return { THREE, render, loadTexture, runInContext }
+  function parseColor(input) {
+    const srgb = (r, g, b) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace)
+    if (input instanceof THREE.Color) return { color: input, alpha: 1 }
+    if (typeof input === "number") return { color: new THREE.Color(input), alpha: 1 }
+    if (Array.isArray(input)) return { color: srgb(input[0], input[1], input[2]), alpha: input[3] ?? 1 }
+    if (typeof input === "string") {
+      const hex8 = input.match(/^#([0-9a-f]{8})$/i)
+      if (hex8) return { color: new THREE.Color("#" + hex8[1].slice(0, 6)), alpha: parseInt(hex8[1].slice(6), 16) / 255 }
+      const hex4 = input.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])$/i)
+      if (hex4) return { color: new THREE.Color(`#${hex4[1]}${hex4[1]}${hex4[2]}${hex4[2]}${hex4[3]}${hex4[3]}`), alpha: parseInt(hex4[4] + hex4[4], 16) / 255 }
+      const rgb = input.match(/^rgba?\(([^)]*)\)$/i)
+      if (rgb) {
+        const parts = rgb[1].split(",").map(s => s.trim())
+        const alpha = parts.length === 4 ? parseFloat(parts[3]) : 1
+        return { color: new THREE.Color(`rgb(${parts.slice(0, 3).join(",")})`), alpha }
+      }
+      const hsl = input.match(/^hsla?\(([^)]*)\)$/i)
+      if (hsl) {
+        const parts = hsl[1].split(",").map(s => s.trim())
+        const alpha = parts.length === 4 ? parseFloat(parts[3]) : 1
+        return { color: new THREE.Color(`hsl(${parts.slice(0, 3).join(",")})`), alpha }
+      }
+      return { color: new THREE.Color(input), alpha: 1 }
+    }
+    if (typeof input === "object") return { color: srgb(input.r ?? 0, input.g ?? 0, input.b ?? 0), alpha: input.a ?? 1 }
+  }
+
+  THREE.headless = { render, loadTexture, runInContext, parseColor }
+  return { THREE, render, loadTexture, runInContext, parseColor }
 }

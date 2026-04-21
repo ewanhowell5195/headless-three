@@ -77,7 +77,7 @@ const buffer = await render({ scene, camera })
 
 ### `getTHREE(options)`
 
-Returns a promise that resolves to `{ THREE, render, loadTexture, runInContext }`.
+Returns a promise that resolves to `{ THREE, render, loadTexture, runInContext, parseColor }`.
 
 #### Options
 
@@ -95,6 +95,9 @@ Returns a promise that resolves to `{ THREE, render, loadTexture, runInContext }
 | `render(options)` | Renders a scene to an image buffer or file |
 | `loadTexture(input)` | Creates a `THREE.CanvasTexture` from a Canvas, Image, ImageData, string path, or Buffer |
 | `runInContext(code)` | Executes JavaScript code inside the VM context |
+| `parseColor(input)` | Parses a color into `{ color, alpha }` |
+
+All helpers (`render`, `loadTexture`, `runInContext`, `parseColor`) are also attached to the returned `THREE` object under `THREE.headless`, so you can destructure just `THREE` and access them as `THREE.headless.render(...)` etc.
 
 ### `render(options)`
 
@@ -110,7 +113,7 @@ Renders a scene to an image buffer or file. When saving to a file, the format is
 | `format` | | Output format (`"png"`, `"jpeg"`, `"webp"`, `"avif"`, `"tiff"`, etc.). Overrides extension inference. See [sharp's output docs](https://sharp.pixelplumbing.com/api-output) for the full list of supported formats |
 | `output` | | Options passed directly to the sharp format encoder (e.g. `{ quality: 85, mozjpeg: true }` for JPEG). See [sharp's output docs](https://sharp.pixelplumbing.com/api-output) for all available options per format |
 | `colorSpace` | `THREE.SRGBColorSpace` | Renderer output color space |
-| `background` | transparent | Background color. Accepts a hex number (`0xff0000`), `[r, g, b, a]` (0–1 floats), `{ r, g, b, a }` (0–1 floats), a CSS-style string (`"#rrggbb"`, `"#rrggbbaa"`, `"rgb(…)"`, `"rgba(…)"`, `"hsl(…)"`, `"hsla(…)"`, named colors like `"red"`), or a `THREE.Color`. Alpha is always optional and defaults to 1 |
+| `background` | transparent | Background color. Accepts any format supported by [`parseColor`](#parsecolorinput-three) |
 | `premultiplyAlpha` | `false` | Keeps alpha premultiplied in the output image. WebGL's alpha blending produces premultiplied pixels in the framebuffer, which makes semi-transparent colors appear darker than expected when saved as PNG. The default (`false`) un-premultiplies them so they render correctly in image viewers. Set to `true` only if you need the raw premultiplied output |
 
 ```js
@@ -181,6 +184,36 @@ const { THREE, runInContext } = await getTHREE({ ... })
 // Load a pre-bundled addon
 runInContext(fs.readFileSync("GLTFLoader.bundle.js", "utf-8"))
 ```
+
+### `parseColor(input)`
+
+`render()`'s `background` option accepts many color formats (hex, arrays, objects, CSS strings, etc.). `parseColor` exposes the same parser so you can accept those formats in your own code without duplicating the logic.
+
+Returns `{ color, alpha }`, where `color` is a `THREE.Color` and `alpha` is a number in `[0, 1]`.
+
+```js
+const { THREE, parseColor } = await getTHREE({ ... })
+
+const { color, alpha } = parseColor("rgba(255, 0, 0, 0.5)")
+renderer.setClearColor(color, alpha)
+```
+
+#### Supported formats
+
+Alpha defaults to fully opaque when not specified.
+
+| Form | Example | Notes |
+|---|---|---|
+| Hex number | `0xff0000` | Treated as sRGB |
+| Array | `[1, 0, 0]`, `[1, 0, 0, 0.5]` | 0–1 floats, sRGB |
+| Object | `{ r: 1, g: 0, b: 0 }`, `{ r: 1, g: 0, b: 0, a: 0.5 }` | 0–1 floats, sRGB |
+| Hex string | `"#rgb"`, `"#rgba"`, `"#rrggbb"`, `"#rrggbbaa"` | Shorthand forms expand per channel |
+| `rgb()` / `rgba()` string | `"rgb(255, 0, 0)"`, `"rgba(255, 0, 0, 0.5)"` | CSS 0–255 for r/g/b, 0–1 for alpha |
+| `hsl()` / `hsla()` string | `"hsl(0, 100%, 50%)"`, `"hsla(0, 100%, 50%, 0.5)"` | CSS HSL |
+| Named color | `"red"`, `"lime"`, `"transparent"` | Any CSS named color |
+| `THREE.Color` instance | `new THREE.Color(1, 0, 0)` | Used verbatim (not re-decoded) |
+
+All non-`THREE.Color` inputs are treated as sRGB values and decoded to linear via `THREE.Color().setRGB(..., SRGBColorSpace)` so the output matches the color you'd pick in a color picker.
 
 ## How It Works
 
