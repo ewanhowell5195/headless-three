@@ -162,18 +162,12 @@ export default async function({ Canvas, Image, ImageData }) {
       const parsed = parseColor(background)
       if (parsed) renderer.setClearColor(parsed.color, parsed.alpha)
     }
-    camera.projectionMatrix.elements[5] *= -1
-    const gl = renderer.getContext()
-    const currentFrontFace = gl.getParameter(gl.FRONT_FACE)
-    gl.frontFace(currentFrontFace === gl.CCW ? gl.CW : gl.CCW)
     renderer.render(scene, camera)
-    gl.frontFace(currentFrontFace)
-    camera.projectionMatrix.elements[5] *= -1
     const pixels = new Uint8Array(width * height * 4)
     glCtx.readPixels(0, 0, width, height, glCtx.RGBA, glCtx.UNSIGNED_BYTE, pixels)
     renderer.dispose()
     glCtx.getExtension("STACKGL_destroy_context")?.destroy()
-    let image = sharp(Buffer.from(pixels.buffer), { raw: { width, height, channels: 4, premultiplied: !premultiplyAlpha } })
+    let image = sharp(Buffer.from(pixels.buffer), { raw: { width, height, channels: 4, premultiplied: !premultiplyAlpha } }).flip()
     image = image[format ?? "png"](output)
     const buffer = await image.toBuffer()
     if (path) await fs.promises.writeFile(path, buffer)
