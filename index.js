@@ -113,6 +113,18 @@ export default async function({ Canvas, Image, ImageData }) {
   vm.runInContext(fs.readFileSync(threePath, "utf-8"), vmCtx)
   const runInContext = code => vm.runInContext(code, vmCtx)
 
+  THREE.ShaderChunk.skinning_pars_vertex = "#ifdef USE_SKINNING\nuniform mat4 bindMatrix;uniform mat4 bindMatrixInverse;uniform highp sampler2D boneTexture;mat4 getBoneMatrix(const in float i){float size=float(BONE_TEXTURE_SIZE);float j=i*4.0;float x=mod(j,size);float y=floor(j/size);float dx=1.0/size;y=dx*(y+0.5);vec4 v1=texture2D(boneTexture,vec2(dx*(x+0.5),y));vec4 v2=texture2D(boneTexture,vec2(dx*(x+1.5),y));vec4 v3=texture2D(boneTexture,vec2(dx*(x+2.5),y));vec4 v4=texture2D(boneTexture,vec2(dx*(x+3.5),y));return mat4(v1,v2,v3,v4);}\n#endif"
+
+  THREE.SkinnedMesh.prototype.onBeforeRender = function(renderer, scene, camera, geometry, material) {
+    if (!this.skeleton) return
+    if (!this.skeleton.boneTexture) this.skeleton.computeBoneTexture()
+    const size = this.skeleton.boneTexture.image.width
+    if (material.defines?.BONE_TEXTURE_SIZE !== size) {
+      material.defines = Object.assign({}, material.defines, { BONE_TEXTURE_SIZE: size })
+      material.needsUpdate = true
+    }
+  }
+
   async function loadTexture(input) {
     let tex
     if (input instanceof Canvas) {

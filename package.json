@@ -20,7 +20,7 @@
     "url": "https://github.com/ewanhowell5195/headless-three/issues"
   },
   "scripts": {
-    "test": "node tests/test.js skia-canvas && node tests/test.js canvas && node tests/test.js @napi-rs/canvas",
+    "test": "node tests/test.js skia-canvas && node tests/test.js canvas && node tests/test.js @napi-rs/canvas && node tests/skinning.js skia-canvas && node tests/skinning.js canvas && node tests/skinning.js @napi-rs/canvas",
     "example": "node examples/cube.js"
   },
   "dependencies": {

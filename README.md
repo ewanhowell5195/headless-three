@@ -215,6 +215,12 @@ Alpha defaults to fully opaque when not specified.
 
 All non-`THREE.Color` inputs are treated as sRGB values and decoded to linear via `THREE.Color().setRGB(..., SRGBColorSpace)` so the output matches the color you'd pick in a color picker.
 
+## Skinned Meshes
+
+Three.js r151+ generates skinning shader code that requires WebGL 2, which [gl](https://www.npmjs.com/package/gl) doesn't provide, so skinned meshes would normally fail to compile and render nothing. headless-three restores the WebGL 1 skinning shader and injects each skeleton's bone texture size into the shader automatically, so `SkinnedMesh` and armature animations just work.
+
+One caveat: a material shared between skinned meshes whose skeletons have different bone texture sizes will recompile its shader every frame. Give those meshes separate materials.
+
 ## How It Works
 
 headless-three uses Node.js's `vm` module to create an isolated V8 context with polyfilled browser APIs (`document`, `window`, `URL`, etc.). Three.js's CJS build runs inside this sandbox, thinking it's in a browser. The canvas library you provide handles the actual drawing surface and image operations. Rendering uses [gl](https://www.npmjs.com/package/gl) for headless WebGL and [sharp](https://www.npmjs.com/package/sharp) for image encoding.
