@@ -5,7 +5,7 @@ Render 3D scenes to images on the server with no browser required.
 Runs Three.js r162 (the last version with WebGL 1 support) without polluting the global scope.
 
 [![npm version](https://badge.fury.io/js/headless-three.svg)](https://www.npmjs.com/package/headless-three)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
 ## Features
 
@@ -227,4 +227,4 @@ headless-three uses Node.js's `vm` module to create an isolated V8 context with 
 
 ## License
 
-MIT © [Ewan Howell](https://ewanhowell.com/)
+[MPL-2.0](LICENSE) © [Ewan Howell](https://ewanhowell.com/)
